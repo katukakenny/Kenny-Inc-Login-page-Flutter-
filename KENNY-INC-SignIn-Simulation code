@@ -1,0 +1,978 @@
+import 'package:flutter/material.dart';
+import 'package:file_picker/file_picker.dart';
+
+void main() {
+  runApp(const KennyIncApp());
+}
+
+class KennyIncApp extends StatelessWidget {
+  const KennyIncApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      title: 'KENNY INC.',
+      theme: ThemeData(
+        useMaterial3: true,
+        primaryColor: Colors.blue,
+        scaffoldBackgroundColor: Colors.white,
+      ),
+      home: const LoginPage(),
+    );
+  }
+}
+
+class LoginPage extends StatefulWidget {
+  const LoginPage({super.key});
+
+  @override
+  State<LoginPage> createState() => _LoginPageState();
+}
+
+class _LoginPageState extends State<LoginPage> {
+  final GlobalKey<FormState> signInFormKey = GlobalKey<FormState>();
+  final GlobalKey<FormState> visitorFormKey = GlobalKey<FormState>();
+  final GlobalKey<FormState> applicantFormKey = GlobalKey<FormState>();
+
+  String currentPage = 'signin';
+
+  String? selectedPosition;
+  String? selectedReason;
+  String? selectedService;
+
+  DateTime? selectedDOB;
+  PlatformFile? selectedCV;
+
+  Map<String, bool> passwordVisibility = {};
+
+  final TextEditingController applicationDetailsController =
+      TextEditingController();
+
+  final List<String> jobPositions = [
+    'Software Developer',
+    'UI/UX Designer',
+    'Hardware Technician',
+    'Cybersecurity Analyst',
+    'IT Support',
+    'Administrator',
+    'Other',
+  ];
+
+  final List<String> visitReasons = [
+    'To see how the organization is',
+    'Check on job vacancies',
+    'Request services',
+  ];
+
+  final List<String> services = [
+    'Software related services',
+    'Hardware related services',
+    'Firewall/Cybersecurity services',
+    'Course training services',
+  ];
+
+  void changePage(String page) {
+    setState(() {
+      currentPage = page;
+    });
+  }
+
+  // TEXT FIELD
+
+  Widget buildTextField(
+    String label, {
+    bool password = false,
+    String? passwordKey,
+    TextInputType keyboardType = TextInputType.text,
+    int maxLines = 1,
+    String? Function(String?)? validator,
+    TextEditingController? controller,
+  }) {
+    String visibilityKey = passwordKey ?? label;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 15),
+      child: TextFormField(
+        controller: controller,
+
+        obscureText: password &&
+            !(passwordVisibility[visibilityKey] ?? false),
+
+        keyboardType: keyboardType,
+        maxLines: password ? 1 : maxLines,
+
+        validator: validator ??
+            (value) {
+              if (value == null || value.trim().isEmpty) {
+                return 'Please enter $label';
+              }
+              return null;
+            },
+
+        decoration: InputDecoration(
+          labelText: label,
+          filled: true,
+          fillColor: Colors.white,
+
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 17,
+          ),
+
+          suffixIcon: password
+              ? IconButton(
+                  icon: Icon(
+                    passwordVisibility[visibilityKey] == true
+                        ? Icons.visibility_off
+                        : Icons.visibility,
+                    color: Colors.grey,
+                  ),
+                  onPressed: () {
+                    setState(() {
+                      passwordVisibility[visibilityKey] =
+                          !(passwordVisibility[visibilityKey] ?? false);
+                    });
+                  },
+                )
+              : null,
+
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide.none,
+          ),
+
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: Colors.black12),
+          ),
+
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(
+              color: Colors.blue,
+              width: 1.5,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // DROPDOWN FIELD
+
+  Widget buildDropdown(
+    String label,
+    List<String> items,
+    String? selectedValue,
+    Function(String?) onChanged,
+  ) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 15),
+      child: DropdownButtonFormField<String>(
+        value: selectedValue,
+        isExpanded: true,
+
+        decoration: InputDecoration(
+          labelText: label,
+          filled: true,
+          fillColor: Colors.white,
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 5,
+          ),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide.none,
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: Colors.black12),
+          ),
+        ),
+
+        items: items.map((item) {
+          return DropdownMenuItem(
+            value: item,
+            child: Text(
+              item,
+              style: const TextStyle(fontSize: 14),
+            ),
+          );
+        }).toList(),
+
+        onChanged: onChanged,
+
+        validator: (value) {
+          if (value == null || value.isEmpty) {
+            return 'Please select $label';
+          }
+          return null;
+        },
+      ),
+    );
+  }
+
+  // MAIN HEADER
+
+  Widget buildHeader() {
+    return Container(
+      width: double.infinity,
+
+      padding: const EdgeInsets.symmetric(
+        horizontal: 25,
+        vertical: 35,
+      ),
+
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            Colors.blue,
+            Colors.red,
+            Colors.purple,
+            Colors.green,
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+
+        borderRadius: BorderRadius.only(
+          bottomLeft: Radius.circular(35),
+          bottomRight: Radius.circular(35),
+        ),
+      ),
+
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 22,
+              vertical: 15,
+            ),
+
+            decoration: BoxDecoration(
+              border: Border.all(
+                color: Colors.white,
+                width: 2,
+              ),
+              borderRadius: BorderRadius.circular(15),
+            ),
+
+            child: const Text(
+              'KENNY INC.',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 3,
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 25),
+
+          const Text(
+            'Welcome to KENNY INC.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 25,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+
+          const SizedBox(height: 10),
+
+          const Text(
+            '...Have a soft life, with your software in great hands...',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 13,
+              fontStyle: FontStyle.italic,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // BUTTON DESIGN
+
+  Widget buildButton(String text, VoidCallback onPressed) {
+    return SizedBox(
+      width: double.infinity,
+      height: 52,
+
+      child: ElevatedButton(
+        onPressed: onPressed,
+
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color(0xFF172554),
+          foregroundColor: Colors.white,
+
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+
+        child: Text(
+          text,
+          style: const TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.bold,
+            letterSpacing: 1,
+          ),
+        ),
+      ),
+    );
+  }
+
+  // SIGN IN PAGE
+
+  Widget buildSignIn() {
+    return Form(
+      key: signInFormKey,
+
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Sign In',
+            style: TextStyle(
+              fontSize: 23,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF172554),
+            ),
+          ),
+
+          const SizedBox(height: 8),
+
+          const Text(
+            'Enter your employee details to continue.',
+            style: TextStyle(color: Colors.black54),
+          ),
+
+          const SizedBox(height: 25),
+
+          buildTextField('Name'),
+
+          buildTextField('Surname'),
+
+          buildTextField(
+            'Password',
+            password: true,
+            passwordKey: 'employeePassword',
+          ),
+
+          buildDropdown(
+            'Job Position',
+            jobPositions,
+            selectedPosition,
+            (value) {
+              setState(() {
+                selectedPosition = value;
+              });
+            },
+          ),
+
+          buildTextField('Employee ID Number'),
+
+          buildButton('SIGN IN', () {
+            if (signInFormKey.currentState!.validate()) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Sign-in form validated.'),
+                ),
+              );
+            }
+          }),
+
+          const SizedBox(height: 25),
+
+          Center(
+            child: Wrap(
+              alignment: WrapAlignment.center,
+              children: [
+                const Text("Don't have an account? "),
+
+                TextButton(
+                  onPressed: () {
+                    changePage('signup');
+                  },
+
+                  child: const Text(
+                    'Sign Up',
+                    style: TextStyle(
+                      color: Colors.blue,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // SIGN UP CHOICE PAGE
+
+  Widget buildSignupChoice() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Create an Account',
+          style: TextStyle(
+            fontSize: 23,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF172554),
+          ),
+        ),
+
+        const SizedBox(height: 10),
+
+        const Text(
+          'Choose the type of account you want to create.',
+          style: TextStyle(color: Colors.black54),
+        ),
+
+        const SizedBox(height: 30),
+
+        buildButton('SIGN UP AS A VISITOR', () {
+          changePage('visitor');
+        }),
+
+        const SizedBox(height: 18),
+
+        buildButton('SIGN UP AS A JOB APPLICANT', () {
+          changePage('applicant');
+        }),
+
+        const SizedBox(height: 25),
+
+        Center(
+          child: TextButton(
+            onPressed: () {
+              changePage('signin');
+            },
+            child: const Text('Back to Sign In'),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // VISITOR REGISTRATION PAGE
+
+  Widget buildVisitorForm() {
+    return Form(
+      key: visitorFormKey,
+
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Visitor Registration',
+            style: TextStyle(
+              fontSize: 23,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF172554),
+            ),
+          ),
+
+          const SizedBox(height: 22),
+
+          buildTextField('Name'),
+
+          buildTextField('Surname'),
+
+          buildDropdown(
+            'Reason for Visit',
+            visitReasons,
+            selectedReason,
+            (value) {
+              setState(() {
+                selectedReason = value;
+                selectedService = null;
+              });
+            },
+          ),
+
+          if (selectedReason == 'Request services')
+            buildDropdown(
+              'Select Service',
+              services,
+              selectedService,
+              (value) {
+                setState(() {
+                  selectedService = value;
+                });
+              },
+            ),
+
+          buildTextField(
+            'Gmail Address',
+            keyboardType: TextInputType.emailAddress,
+            validator: (value) {
+              if (value == null || value.trim().isEmpty) {
+                return 'Please enter your Gmail address';
+              }
+
+              if (!RegExp(r'^[^@]+@gmail\.com$')
+                  .hasMatch(value.trim())) {
+                return 'Enter a valid Gmail address';
+              }
+
+              return null;
+            },
+          ),
+
+          buildTextField(
+            'Phone Number',
+            keyboardType: TextInputType.phone,
+          ),
+
+          buildTextField(
+            'Create Password',
+            password: true,
+            passwordKey: 'visitorPassword',
+          ),
+
+          buildButton('CREATE ACCOUNT', () {
+            if (visitorFormKey.currentState!.validate()) {
+              if (selectedReason == 'Request services' &&
+                  selectedService == null) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Please select a service.'),
+                  ),
+                );
+                return;
+              }
+
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Visitor registration form validated.'),
+                ),
+              );
+            }
+          }),
+
+          const SizedBox(height: 15),
+
+          Center(
+            child: TextButton(
+              onPressed: () {
+                changePage('signup');
+              },
+              child: const Text('Back'),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // DATE OF BIRTH CALENDAR
+
+  Future<void> selectDateOfBirth() async {
+    DateTime today = DateTime.now();
+
+    DateTime? date = await showDatePicker(
+      context: context,
+
+      initialDate: DateTime(
+        today.year - 18,
+        today.month,
+        today.day,
+      ),
+
+      firstDate: DateTime(1900),
+
+      lastDate: today,
+
+      initialDatePickerMode: DatePickerMode.year,
+
+      helpText: 'SELECT DATE OF BIRTH',
+
+      cancelText: 'CANCEL',
+
+      confirmText: 'SELECT',
+
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: Color(0xFF172554),
+              onPrimary: Colors.white,
+              onSurface: Colors.black,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (date != null) {
+      setState(() {
+        selectedDOB = date;
+      });
+    }
+  }
+
+  // DATE OF BIRTH INPUT FIELD
+
+  Widget buildDOBField() {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 15),
+
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Date of Birth',
+            style: TextStyle(
+              fontWeight: FontWeight.w500,
+              fontSize: 14,
+            ),
+          ),
+
+          const SizedBox(height: 8),
+
+          InkWell(
+            onTap: selectDateOfBirth,
+
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(17),
+
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.black12),
+              ),
+
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.calendar_month,
+                    color: Color(0xFF172554),
+                  ),
+
+                  const SizedBox(width: 12),
+
+                  Expanded(
+                    child: Text(
+                      selectedDOB == null
+                          ? 'Select your date of birth'
+                          : '${selectedDOB!.day.toString().padLeft(2, '0')}/'
+                              '${selectedDOB!.month.toString().padLeft(2, '0')}/'
+                              '${selectedDOB!.year}',
+
+                      style: TextStyle(
+                        color: selectedDOB == null
+                            ? Colors.black54
+                            : Colors.black,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ),
+
+                  const Icon(
+                    Icons.arrow_drop_down,
+                    color: Colors.grey,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // UPLOAD CV
+
+  Future<void> uploadCV() async {
+    FilePickerResult? result =
+        await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['pdf', 'doc', 'docx'],
+    );
+
+    if (result != null && mounted) {
+      setState(() {
+        selectedCV = result.files.first;
+      });
+    }
+  }
+
+  // JOB APPLICANT REGISTRATION PAGE
+
+  Widget buildApplicantForm() {
+    return Form(
+      key: applicantFormKey,
+
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Job Applicant Registration',
+            style: TextStyle(
+              fontSize: 23,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF172554),
+            ),
+          ),
+
+          const SizedBox(height: 22),
+
+          buildTextField('Name'),
+
+          buildTextField('Surname'),
+
+          buildTextField(
+            'Middle Name (Optional)',
+            validator: (value) => null,
+          ),
+
+          buildDOBField(),
+
+          const Text(
+            'Upload CV or Application Details',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+
+          const SizedBox(height: 8),
+
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(15),
+            margin: const EdgeInsets.only(bottom: 15),
+
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.black12),
+            ),
+
+            child: Column(
+              children: [
+                const Icon(
+                  Icons.cloud_upload_outlined,
+                  size: 35,
+                  color: Colors.blue,
+                ),
+
+                const SizedBox(height: 8),
+
+                Text(
+                  selectedCV == null
+                      ? 'No CV selected'
+                      : selectedCV!.name,
+
+                  textAlign: TextAlign.center,
+
+                  style: const TextStyle(
+                    fontSize: 13,
+                  ),
+                ),
+
+                const SizedBox(height: 10),
+
+                OutlinedButton.icon(
+                  onPressed: uploadCV,
+                  icon: const Icon(Icons.upload_file),
+                  label: const Text('Upload CV'),
+                ),
+              ],
+            ),
+          ),
+
+          buildTextField(
+            'Application Details (Optional)',
+            maxLines: 3,
+            controller: applicationDetailsController,
+            validator: (value) => null,
+          ),
+
+          buildTextField(
+            'Phone Number',
+            keyboardType: TextInputType.phone,
+          ),
+
+          buildTextField(
+            'Gmail Address',
+            keyboardType: TextInputType.emailAddress,
+            validator: (value) {
+              if (value == null || value.trim().isEmpty) {
+                return 'Please enter your Gmail address';
+              }
+
+              if (!RegExp(r'^[^@]+@gmail\.com$')
+                  .hasMatch(value.trim())) {
+                return 'Enter a valid Gmail address';
+              }
+
+              return null;
+            },
+          ),
+
+          buildTextField(
+            'Home Address',
+            maxLines: 2,
+          ),
+
+          buildTextField(
+            'Create Password',
+            password: true,
+            passwordKey: 'applicantPassword',
+          ),
+
+          buildButton('SUBMIT APPLICATION', () {
+            if (applicantFormKey.currentState!.validate()) {
+              if (selectedDOB == null) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text(
+                      'Please select your date of birth.',
+                    ),
+                  ),
+                );
+                return;
+              }
+
+              if (selectedCV == null &&
+                  applicationDetailsController.text.trim().isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text(
+                      'Please upload your CV or enter application details.',
+                    ),
+                  ),
+                );
+                return;
+              }
+
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text(
+                    'Application form validated successfully.',
+                  ),
+                ),
+              );
+            }
+          }),
+
+          const SizedBox(height: 15),
+
+          Center(
+            child: TextButton(
+              onPressed: () {
+                changePage('signup');
+              },
+              child: const Text('Back'),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // DISPLAY THE CORRECT PAGE
+
+  Widget buildContent() {
+    switch (currentPage) {
+      case 'signin':
+        return buildSignIn();
+
+      case 'signup':
+        return buildSignupChoice();
+
+      case 'visitor':
+        return buildVisitorForm();
+
+      case 'applicant':
+        return buildApplicantForm();
+
+      default:
+        return buildSignIn();
+    }
+  }
+
+  @override
+  void dispose() {
+    applicationDetailsController.dispose();
+    super.dispose();
+  }
+
+  // MAIN APPLICATION DESIGN
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: SafeArea(
+        child: SingleChildScrollView(
+          child: Column(
+            children: [
+              buildHeader(),
+
+              const SizedBox(height: 25),
+
+              Center(
+                child: Container(
+                  width: double.infinity,
+
+                  constraints: const BoxConstraints(
+                    maxWidth: 500,
+                  ),
+
+                  margin: const EdgeInsets.symmetric(
+                    horizontal: 18,
+                  ),
+
+                  padding: const EdgeInsets.all(22),
+
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE5E7EB),
+
+                    borderRadius: BorderRadius.circular(20),
+
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.08),
+                        blurRadius: 12,
+                        offset: const Offset(0, 5),
+                      ),
+                    ],
+                  ),
+
+                  child: buildContent(),
+                ),
+              ),
+
+              const SizedBox(height: 25),
+
+              const Text(
+                'KENNY INC. © 2026',
+                style: TextStyle(
+                  color: Colors.black45,
+                  fontSize: 12,
+                  letterSpacing: 1,
+                ),
+              ),
+
+              const SizedBox(height: 20),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
